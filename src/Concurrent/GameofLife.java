@@ -5,6 +5,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
+import javax.swing.JFrame;
+
 import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
@@ -16,7 +18,6 @@ import org.jocl.cl_mem;
 import org.jocl.cl_platform_id;
 import org.jocl.cl_program;
 
-import OpenCL.main;
 
 import static org.jocl.CL.CL_CONTEXT_PLATFORM;
 import static org.jocl.CL.CL_DEVICE_TYPE_ALL;
@@ -97,27 +98,27 @@ class LifeEnv extends Canvas {
 	}
 
 	public void run1Generation() {
-		int unflatSrcArray[][] = new int[102][102];
-		int firstArray[] = new int[10404];
-		int secondArray[] = new int[10404];
+		int scatterArray[][] = new int[102][102];
+		int scatterArray2D[] = new int[10404];
+		int sendArray[] = new int[10404];
 
 		// flatten the array with 0's around the outside
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < N; j++) {
-				unflatSrcArray[i + 1][j + 1] = current[i][j];
+				scatterArray[i + 1][j + 1] = current[i][j];
 			}
 		}
 		int count = 0;
 		for (int i = 0; i < N+2; i++) {
 			for (int j = 0; j < N+2; j++) {
-				firstArray[count] = unflatSrcArray[i][j];
+				scatterArray2D[count] = scatterArray[i][j];
 				count++;
 			}
 		}
 
 		// pointers
-		final Pointer firstArrayPointer = Pointer.to(firstArray);
-		final Pointer secondArrayPointer = Pointer.to(secondArray);
+		final Pointer firstArrayPointer = Pointer.to(scatterArray2D);
+		final Pointer secondArrayPointer = Pointer.to(sendArray);
 
 		final int numOfPlatforms[] = new int[1];
 		clGetPlatformIDs(0, null, numOfPlatforms);
@@ -247,7 +248,7 @@ class LifeEnv extends Canvas {
 						if (i == 0 || i == 101 || j == 0 || j == 101) {
 							newCount++;
 						} else {
-							update[i - 1][j - 1] = secondArray[newCount];
+							update[i - 1][j - 1] = sendArray[newCount];
 							newCount++;
 						}
 					}
@@ -277,7 +278,7 @@ class LifeEnv extends Canvas {
 						if (i == 0 || i == 101 || j == 0 || j == 101) {
 							newCount++;
 						} else {
-							update[i - 1][j - 1] = secondArray[newCount];
+							update[i - 1][j - 1] = sendArray[newCount];
 							newCount++;
 						}
 						// Slow things down so that you can see them
@@ -341,4 +342,21 @@ class Worker extends Thread {
 		game.work();
 	}
 
+}
+
+
+class main{
+
+    public static void main(final String... args ) {
+        GameofLife g = new GameofLife();
+        JFrame frame = new JFrame();
+        frame.getContentPane().add(g);
+        Container c = frame.getContentPane();
+        Dimension d = new Dimension(400,400);
+        c.setPreferredSize(d);
+        frame.pack();
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        g.init();
+    }
 }
