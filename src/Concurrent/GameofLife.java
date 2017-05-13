@@ -81,7 +81,8 @@ class LifeEnv extends Canvas {
 	private static final int N = 100;
 	private static final int CANVAS_SIZE = 800;
 
-	private static int generCount=0;
+	private static int generCount = 0;
+
 	public LifeEnv() {
 		update = new int[N][N];
 		current = new int[N][N];
@@ -101,7 +102,6 @@ class LifeEnv extends Canvas {
 		int scatterArray[][] = new int[102][102];
 		int scatterArray2D[] = new int[10404];
 		int sendArray[] = new int[10404];
-		
 
 		// flatten the array with 0's around the outside
 		for (int i = 0; i < N; i++) {
@@ -195,14 +195,14 @@ class LifeEnv extends Canvas {
 
 		// Work item dimensions
 		final long sendSize[] = new long[] { 100 };
-		final long localSize[] = new long[] { 1 }; 
+		final long localSize[] = new long[] { 1 };
 		final long algSendSize[] = new long[] { 100, 100 }; // required
-																		// because
-																		// 2D
-																		// kernels
-																		// need
-																		// 2
-																		// arguments
+															// because
+															// 2D
+															// kernels
+															// need
+															// 2
+															// arguments
 		final long calc_local_work_size[] = new long[] { 1, 1 };
 
 		int gener = 0;
@@ -213,12 +213,10 @@ class LifeEnv extends Canvas {
 			long sTime = System.nanoTime();
 
 			// do the calculations on the cells
-			clEnqueueNDRangeKernel(commandQueue, k_addSideRows, 1, null, sendSize, localSize, 0, null,
+			clEnqueueNDRangeKernel(commandQueue, k_addSideRows, 1, null, sendSize, localSize, 0, null, null);
+			clEnqueueNDRangeKernel(commandQueue, k_addSideCols, 1, null, sendSize, localSize, 0, null, null);
+			clEnqueueNDRangeKernel(commandQueue, k_calculate, 2, null, algSendSize, calc_local_work_size, 0, null,
 					null);
-			clEnqueueNDRangeKernel(commandQueue, k_addSideCols, 1, null, sendSize, localSize, 0, null,
-					null);
-			clEnqueueNDRangeKernel(commandQueue, k_calculate, 2, null, algSendSize, calc_local_work_size, 0,
-					null, null);
 
 			if (gener % 2 == 1) {
 				// reassign the arguments for the next iteration, swapping the
@@ -244,6 +242,7 @@ class LifeEnv extends Canvas {
 						}
 					}
 				}
+				gener++;
 				// print it out
 				swap = current;
 				current = update;
@@ -281,6 +280,7 @@ class LifeEnv extends Canvas {
 															// milli seconds
 				System.out.println("Generation# " + generCount + " execution time = " + duration + "ms");
 
+				gener++;
 				swap = current;
 				current = update;
 				update = swap;
