@@ -24,10 +24,9 @@ __kernel void calculate(__global int *srcArray, __global int *outArray){
     int gid = y*(d+2)+x;
     int neighborTotal;
 
-    if (y <= d && x <= d) { //if the cell is one of the ones that we need to compute
-
+    if (y <= d && x <= d) {
         int cell = srcArray[gid];
-        //below are the algorithm for the Game of Life
+        //below is the algorithm for the Game of Life
         switch ( srcArray[gid-(d+1)] + srcArray[gid-(d+2)] + srcArray[gid+(d+1)] + srcArray[gid+(d+2)] + srcArray[gid+1] + srcArray[gid-1] + srcArray[gid+(d+3)] + srcArray[gid-(d+3)] ) {
                 case 0:
                 case 1: outArray[gid] = 0; break;
