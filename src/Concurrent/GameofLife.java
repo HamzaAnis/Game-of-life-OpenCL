@@ -18,7 +18,6 @@ import org.jocl.cl_mem;
 import org.jocl.cl_platform_id;
 import org.jocl.cl_program;
 
-
 import static org.jocl.CL.CL_CONTEXT_PLATFORM;
 import static org.jocl.CL.CL_DEVICE_TYPE_ALL;
 import static org.jocl.CL.CL_MEM_READ_WRITE;
@@ -61,7 +60,7 @@ public class GameofLife extends Applet {
 	private void build(Container f) {
 		setLayout(new BorderLayout());
 		env = new LifeEnv();
-		env.setBackground(Color.white);
+		env.setBackground(Color.decode("#AA7739"));
 		f.add("Center", env);
 	}
 }
@@ -344,19 +343,18 @@ class Worker extends Thread {
 
 }
 
+class main {
 
-class main{
-
-    public static void main(final String... args ) {
-        GameofLife g = new GameofLife();
-        JFrame frame = new JFrame();
-        frame.getContentPane().add(g);
-        Container c = frame.getContentPane();
-        Dimension d = new Dimension(400,400);
-        c.setPreferredSize(d);
-        frame.pack();
-        frame.setVisible(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        g.init();
-    }
+	public static void main(final String... args) {
+		GameofLife g = new GameofLife();
+		JFrame frame = new JFrame();
+		frame.getContentPane().add(g);
+		Container c = frame.getContentPane();
+		Dimension d = new Dimension(800, 800);
+		c.setPreferredSize(d);
+		frame.pack();
+		frame.setVisible(true);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		g.init();
+	}
 }
