@@ -81,6 +81,7 @@ class LifeEnv extends Canvas {
 	private static final int N = 100;
 	private static final int CANVAS_SIZE = 800;
 
+	private static int generCount=0;
 	public LifeEnv() {
 		update = new int[N][N];
 		current = new int[N][N];
@@ -100,6 +101,7 @@ class LifeEnv extends Canvas {
 		int scatterArray[][] = new int[102][102];
 		int scatterArray2D[] = new int[10404];
 		int sendArray[] = new int[10404];
+		
 
 		// flatten the array with 0's around the outside
 		for (int i = 0; i < N; i++) {
@@ -108,8 +110,8 @@ class LifeEnv extends Canvas {
 			}
 		}
 		int count = 0;
-		for (int i = 0; i < N+2; i++) {
-			for (int j = 0; j < N+2; j++) {
+		for (int i = 0; i < N + 2; i++) {
+			for (int j = 0; j < N + 2; j++) {
 				scatterArray2D[count] = scatterArray[i][j];
 				count++;
 			}
@@ -192,11 +194,9 @@ class LifeEnv extends Canvas {
 		clSetKernelArg(k_calculate, 1, Sizeof.cl_mem, Pointer.to(memObjects[1]));
 
 		// Work item dimensions
-		final long global_work_size[] = new long[] { 100 };
-		final long local_work_size[] = new long[] { 1 }; // used to optimize how
-															// many work units
-															// in work group?
-		final long calc_global_work_size[] = new long[] { 100, 100 }; // required
+		final long sendSize[] = new long[] { 100 };
+		final long localSize[] = new long[] { 1 }; 
+		final long algSendSize[] = new long[] { 100, 100 }; // required
 																		// because
 																		// 2D
 																		// kernels
@@ -205,30 +205,22 @@ class LifeEnv extends Canvas {
 																		// arguments
 		final long calc_local_work_size[] = new long[] { 1, 1 };
 
-		int iter = 0;
-		// this while loop infinitely executes the kernels and switches between
-		// two versions of the array.
-		// in each loop one array stores the results of the last iteration and
-		// the other one stores the results of the current one
-		// after the computation we switch the arrays. Effectively switching
-		// between Current and Update.
-		// looping here saves calling the above initialization code over and
-		// over
+		int gener = 0;
 		while (true) {
 
 			// used to calculate the execution time. The time until now was
 			// tested to be around 600ms on my machine.
-			long startTime = System.nanoTime();
+			long sTime = System.nanoTime();
 
 			// do the calculations on the cells
-			clEnqueueNDRangeKernel(commandQueue, k_addSideRows, 1, null, global_work_size, local_work_size, 0, null,
+			clEnqueueNDRangeKernel(commandQueue, k_addSideRows, 1, null, sendSize, localSize, 0, null,
 					null);
-			clEnqueueNDRangeKernel(commandQueue, k_addSideCols, 1, null, global_work_size, local_work_size, 0, null,
+			clEnqueueNDRangeKernel(commandQueue, k_addSideCols, 1, null, sendSize, localSize, 0, null,
 					null);
-			clEnqueueNDRangeKernel(commandQueue, k_calculate, 2, null, calc_global_work_size, calc_local_work_size, 0,
+			clEnqueueNDRangeKernel(commandQueue, k_calculate, 2, null, algSendSize, calc_local_work_size, 0,
 					null, null);
 
-			if (iter % 2 == 1) {
+			if (gener % 2 == 1) {
 				// reassign the arguments for the next iteration, swapping the
 				// two arrays
 				clSetKernelArg(k_addSideRows, 0, Sizeof.cl_mem, Pointer.to(memObjects[0]));
@@ -252,7 +244,6 @@ class LifeEnv extends Canvas {
 						}
 					}
 				}
-				iter++;
 				// print it out
 				swap = current;
 				current = update;
@@ -266,11 +257,10 @@ class LifeEnv extends Canvas {
 				clSetKernelArg(k_calculate, 0, Sizeof.cl_mem, Pointer.to(memObjects[1]));
 				clSetKernelArg(k_calculate, 1, Sizeof.cl_mem, Pointer.to(memObjects[0]));
 
-				// read the array to the second array
 				clEnqueueReadBuffer(commandQueue, memObjects[0], CL_TRUE, 0, Sizeof.cl_int * (N + 2) * (N + 2),
 						secondArrayPointer, 0, null, null);
 
-				// unflatten the array
+				// make the array 2 dimensional the array
 				int newCount = 0;
 				for (int i = 0; i < 102; i++) {
 					for (int j = 0; j < 102; j++) {
@@ -286,19 +276,17 @@ class LifeEnv extends Canvas {
 						} while (--iters > 0);
 					}
 				}
-				// if (iter == 0){ // method to print the execution time of one
-				// iteration
 				long endTime = System.nanoTime();
-				long duration = (endTime - startTime) / 1000000;
-				System.out.println("One iasdteration executes in: " + duration + " miliseconds");
-				// }
+				long duration = (endTime - sTime) / 1000000;// converting to
+															// milli seconds
+				System.out.println("Generation# " + generCount + " execution time = " + duration + "ms");
 
-				iter++;
 				swap = current;
 				current = update;
 				update = swap;
 				repaint();
 			}
+			generCount++;
 		}
 	}
 
@@ -350,7 +338,7 @@ class main {
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(g);
 		Container c = frame.getContentPane();
-		Dimension d = new Dimension(800, 800);
+		Dimension d = new Dimension(800, 720);
 		c.setPreferredSize(d);
 		frame.pack();
 		frame.setVisible(true);

@@ -7,7 +7,7 @@ __kernel void addRows(__global int *srcArray){ // adds the side rows to the oppo
         srcArray[gid + (d+2)*(d+1)] = srcArray[gid + (d+2)]; srcArray[gid] = srcArray[gid + (d+2)*d];
     }
 }
-__kernel void addCols(__global int *srcArray){ //adds the side columns to th opposite sides
+__kernel void addCols(__global int *srcArray){ //adds the side columns to the opposite sides
 
     int gid = get_global_id(0);
     int d = 100;
@@ -27,7 +27,7 @@ __kernel void calculate(__global int *srcArray, __global int *outArray){
     if (y <= d && x <= d) { //if the cell is one of the ones that we need to compute
 
         int cell = srcArray[gid];
-        //below are the rules for the Game of Life
+        //below are the algorithm for the Game of Life
         switch ( srcArray[gid-(d+1)] + srcArray[gid-(d+2)] + srcArray[gid+(d+1)] + srcArray[gid+(d+2)] + srcArray[gid+1] + srcArray[gid-1] + srcArray[gid+(d+3)] + srcArray[gid-(d+3)] ) {
                 case 0:
                 case 1: outArray[gid] = 0; break;
